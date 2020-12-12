@@ -3,7 +3,7 @@
 This repository contains the source-code of the discord bot "TibiaBotTools"
 This started as a fun little single file discord bot project containing a handfull of useful features
 
-My idea was to create a bot that makes live easier for tibia players. We all have discord at this points
+My idea was to create a bot that makes life easier for tibia players. We all have discord at this points
 wouldn't it be great to search up information about a character with a simple command rather than having
 to enter the website and search the name manually on the website? That's where this bot makes your life easier.
 With simple commands you can get necessary info to continue your tibia adventure.
