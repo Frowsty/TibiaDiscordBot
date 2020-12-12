@@ -3,6 +3,8 @@ import datetime
 import os
 import requests
 import json
+import sys
+import time
 from locale import atoi, setlocale, LC_NUMERIC
 
 setlocale(LC_NUMERIC, 'en_US.UTF8')
@@ -18,6 +20,9 @@ changeOwner = False
 restartedBot = False
 restartCommandChannel = ""
 savedGuildID = 0
+restartTime = 0
+
+startTime = time.time()
 
 print("Checking for any root users")
 
@@ -48,11 +53,13 @@ if os.path.exists("restartBot.txt"):
                 restartedBot = True
                 restartCommandChannel = splitRestartBotText[1]
                 savedGuildID = int(splitRestartBotText[2])
+                restartTime = float(splitRestartBotText[3])
 
 @client.event
 async def on_ready():
     global restartedBot
     global restartCommandChannel
+    global restartTime
 
     print('Connected as {0.user}'.format(client))
     # If bot was restarted
@@ -63,7 +70,7 @@ async def on_ready():
             os.remove("restartBot.txt")
             restartedBot = False
             restartCommandChannel = ""
-        await channel.send("Bot restarted successfully!")
+        await channel.send("Bot restarted successfully! (Duration: {0} seconds)".format(round(time.time() - restartTime, 2)))
 
 @client.event
 async def on_message(message):
@@ -74,6 +81,7 @@ async def on_message(message):
     global changeOwner
     global restartedBot
     global restartCommandChannel
+    global startTime
 
     if message.author == client.user:
         return
@@ -82,13 +90,17 @@ async def on_message(message):
         replyMessage = '<@{}>'.format(message.author.id)
         replyMessage = replyMessage + "```***Help / Commands for owner***\n"
         replyMessage = replyMessage + ".setRootAccess ID         - Assign owner and root access to a user (preferably the owner)\n"
-        replyMessage = replyMessage + ".restartBot               - Restart the bot, will take a few seconds\n"
+        replyMessage = replyMessage + ".restartBot               - Restart the bot, will take a few seconds. Don't forget to include root password if you're not the assigned owner\n"
         replyMessage = replyMessage + ".pauseBot                 - Paus the bot from responding to commands, will still respond to root commands\n"
         replyMessage = replyMessage + ".resumeBot                - Unpause the bot from responding to commands\n"
         replyMessage = replyMessage + ".changeOwner              - Will change the owner to another user\n"
         replyMessage = replyMessage + ".setRootPassword OLD NEW  - Will set a new root password\n"
         replyMessage = replyMessage + ".giveRootPassword         - Will send you the root password if you're the assigned owner```"
         print("{0} executed admin help commands".format(message.author))
+        await message.channel.send(replyMessage)
+    elif message.content.startswith('.adminHelp'):
+        replyMessage = '<@{}>'.format(message.author.id)
+        replyMessage = replyMessage + "```***Error***\nDon't forget to include the root password to execute this command```"
         await message.channel.send(replyMessage)
 
     # Root access to bot
@@ -168,10 +180,12 @@ async def on_message(message):
             os.remove("restartBot.txt")
         with open("restartBot.txt", 'w') as f:
             print("Saved channel and guild")
-            f.write("TRUE " + message.channel.name + " " + str(message.guild.id))
+            f.write("TRUE " + message.channel.name + " " + str(message.guild.id) + " " + str(time.time()))
         await message.channel.send("Please wait a moment as I restart! Be right back!")
-        os.system("python3 bot.py")
-        exit()
+        os.execv(sys.executable, ['python3'] + sys.argv)
+    elif message.content.startswith('.restartBot'):
+        await message.channel.send("You lack permissions to execute a restart! Please provide the root password or become owner of the bot")
+
 
     # End of root access
 
@@ -189,7 +203,10 @@ async def on_message(message):
             replyMessage = replyMessage + ".charInfo name              - Will show information about the player name specified\n"
             replyMessage = replyMessage + ".deathList name             - Will show all deaths of the player name specified\n"
             replyMessage = replyMessage + ".vocStats ED/RP/MS/EK level - Will display general stats for the vocation and specified level\n"
-            replyMessage = replyMessage + ".whoIsOwner?                - Will display who is the assigned owner of the current bot instance```"
+            replyMessage = replyMessage + ".whoIsOwner?                - Will display who is the assigned owner of the current bot instance\n"
+            replyMessage = replyMessage + ".github?                    - Will display the link to my github containing the project for this bot\n"
+            replyMessage = replyMessage + ".upTime S/M/H/D             - Will display the current time elapsed since bot restarted (S = seconds, M = minutes, H = hours, D = days)\n"
+            replyMessage = replyMessage + ".spell spellname            - Will display information about the spell name you are looking up```"
             print("{0} executed help command".format(message.author))
             await message.channel.send(replyMessage)
 
@@ -379,6 +396,94 @@ async def on_message(message):
                 replyMessage = replyMessage + '{0} is the owner```'.format(user.name)
             else:
                 replyMessage = replyMessage + 'No one is assigned owner```'
+            await message.channel.send(replyMessage)
+        if message.content.startswith('.github?'):
+            replyMessage = '<@{}>'.format(message.author.id)
+            replyMessage = replyMessage + "\nThis bot is open-source and available here: https://github.com/Frowsty/TibiaDiscordBot"
+            await message.channel.send(replyMessage)
+
+        if message.content.startswith('.upTime '):
+            removePrefix = message.content.split(' ')
+            if removePrefix[0] == ' ':
+                del removePrefix[0]
+            didFindUnit = False
+            replyMessage = '<@{}>'.format(message.author.id) + '```***Uptime***\n'
+            if removePrefix[1].upper() == 'S':
+                replyMessage = replyMessage + "Current uptime is: {0} seconds```".format(round(time.time() - startTime, 2))
+                didFindUnit = True
+            if removePrefix[1].upper() == 'M':
+                replyMessage = replyMessage + "Current uptime is: {0} minutes```".format(round(int(time.time() - startTime) / 60, 2))
+                didFindUnit = True
+            if removePrefix[1].upper() == 'H':
+                replyMessage = replyMessage + "Current uptime is: {0} hours```".format(round(int(time.time() - startTime) / 3600, 2))
+                didFindUnit = True
+            if removePrefix[1].upper() == 'D':
+                replyMessage = replyMessage + "Current uptime is: {0} days```".format(round(int(time.time() - startTime) / 86400, 2))
+                didFindUnit = True
+            if not didFindUnit:
+                replyMessage = replyMessage + "You forgot to specify the unit of which time should be presented in. Please use S/M/H/D after the command. Example '.upTime S'```"
+            print("{0} executed uptime command".format(message.author))
+            await message.channel.send(replyMessage)
+
+        if message.content.startswith('.spell '):
+            removePrefix = message.content.split('.spell ')
+            if removePrefix[0] == ' ':
+                del removePrefix[0]
+            splitSpellName = removePrefix[1].split()
+            spellName = ""
+            num = 0
+            for i in splitSpellName:
+                num = num + 1
+                if num < len(splitSpellName):
+                    spellName = spellName + i.capitalize() + "%20"
+                else:
+                    spellName = spellName + i.capitalize()
+            print(spellName)
+            response = requests.get('https://tibiawiki.dev/api/spells/{0}'.format(spellName))
+            if response.status_code == 200:
+                response = response.json()
+                vocText = response["voc"]
+                vocText = vocText.replace("[", "")
+                vocText = vocText.replace("]", "")
+                replyMessage = '<@{}>'.format(message.author.id) + '```***Spell Info***\n'
+                replyMessage = replyMessage + 'Name: {0}\n'.format(response["name"])
+                replyMessage = replyMessage + 'Level: {0}\n'.format(response["levelrequired"])
+                replyMessage = replyMessage + 'Mana Cost: {0}\n'.format(response["mana"])
+                replyMessage = replyMessage + 'Vocation(s): {0}\n'.format(vocText)
+                replyMessage = replyMessage + 'Spell Cost: {0}\n'.format(response["spellcost"])
+                replyMessage = replyMessage + 'Spell Type: {0}\n'.format(response["subclass"])
+                if response["subclass"] == "Attack":
+                    replyMessage = replyMessage + 'Damage Type: {0}\n'.format(response["damagetype"])
+                replyMessage = replyMessage + 'Spell Words: {0}\n\n'.format(response["words"])
+                replyMessage = replyMessage + 'Information provided by: https://tibiawiki.dev/api```'
+            else:
+                replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
+            print("{0} executed spell lookup command".format(message.author))
+            await message.channel.send(replyMessage)
+
+        if message.content.startswith('.spells '):
+            removePrefix = message.content.split('.spells ')
+            if removePrefix[0] == ' ':
+                del removePrefix[0]
+            if "knight" in removePrefix[1].lower() or "paladin" in removePrefix[1].lower() or "druid" in removePrefix[1].lower() or "sorcerer" in removePrefix[1].lower():
+                await message.channel.send("Please give me a moment to fetch this data from the api")
+                response = requests.get('https://tibiawiki.dev/api/spells?expand=true')
+                if response.status_code == 200:
+                    response = response.json()
+                    spellList = list()
+                    for i in response:
+                        if "voc" in i:
+                            if removePrefix[1].lower() in i["voc"].lower():
+                                print(i["name"])
+                                spellList.append(i["name"])
+                    replyMessage = '<@{}>'.format(message.author.id) + '```***Spell List for the vocation you specified***\n'
+                    for i in spellList:
+                        replyMessage = replyMessage + '{0}\n'.format(i)
+                    replyMessage = replyMessage + '\nInformation provided by: https://tibiawiki.dev/api```'
+                else:
+                    replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
+            else:
+                replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nVocation not recognized```"
             await message.channel.send(replyMessage)
 
 botToken = ""
