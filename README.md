@@ -20,6 +20,7 @@ With simple commands you can get necessary info to continue your tibia adventure
 - Vocation stats (.vocStats EK/RP/ED/MS LEVEL)
   - Will display general stats for the specified vocation and level
   - The following stats will be shown: speed, cap, health, mana 
-
-# LOOT RELATED COMMANDS ARE GLOBALLY STORED ON THE SERVER, IT IS NOT SERVER SPECIFIC THEREFOR IF YOU WANT TO USE THOSE YOU MUST DEPLOY THIS BOT ON YOUR OWN SERVER
+- Calculate loot payouts (.calcLoot LOOTTEXT)
+  - Will calculate and display the proper payout each party member should receive
+### SAVED LOOT RELATED COMMANDS GLOBALLY STORE LOOT INFO ON THE SERVER THAT IS HOSTING THE DISCORD BOT, IT IS NOT SAVED AS DISCORD SERVER SPECIFIC DATA THEREFORE IF YOU WANT TO USE THOSE YOU MUST DEPLOY THIS BOT ON YOUR OWN SERVER
   
