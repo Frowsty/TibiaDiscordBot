@@ -22,5 +22,9 @@ With simple commands you can get necessary info to continue your tibia adventure
   - The following stats will be shown: speed, cap, health, mana 
 - Calculate loot payouts (.calcLoot LOOTTEXT)
   - Will calculate and display the proper payout each party member should receive
+- To view all commands available you can use the help command (.help)
+  - This will display all normal user commands available
+- To view admin commands you need the admin password (.adminHelp PASSWORD)
+  - This will show admin related commands such as pauseBot, resumeBot, restartBot etc etc...
 ### SAVED LOOT RELATED COMMANDS GLOBALLY STORE LOOT INFO ON THE SERVER THAT IS HOSTING THE DISCORD BOT, IT IS NOT SAVED AS DISCORD SERVER SPECIFIC DATA THEREFORE IF YOU WANT TO USE THOSE YOU MUST DEPLOY THIS BOT ON YOUR OWN SERVER
   
