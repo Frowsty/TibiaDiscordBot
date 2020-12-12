@@ -26,5 +26,5 @@ With simple commands you can get necessary info to continue your tibia adventure
   - This will display all normal user commands available
 - To view admin commands you need the admin password (.adminHelp PASSWORD)
   - This will show admin related commands such as pauseBot, resumeBot, restartBot etc etc...
-### SAVED LOOT RELATED COMMANDS GLOBALLY STORE LOOT INFO ON THE SERVER THAT IS HOSTING THE DISCORD BOT, IT IS NOT SAVED AS DISCORD SERVER SPECIFIC DATA THEREFORE IF YOU WANT TO USE THOSE YOU MUST DEPLOY THIS BOT ON YOUR OWN SERVER
+### SAVED LOOT RELATED COMMANDS ARE GLOBALLY STORED LOOT INFO ON THE SERVER THAT IS HOSTING THE DISCORD BOT, IT IS NOT SAVED AS DISCORD SERVER / USER SPECIFIC DATA THEREFORE IF YOU WANT TO USE THOSE YOU MUST DEPLOY THIS BOT ON YOUR OWN SERVER FOR THE TIME BEING
   
