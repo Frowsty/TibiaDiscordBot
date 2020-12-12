@@ -213,4 +213,4 @@ async def on_message(message):
                 replyMessage = replyMessage + "\n"
             replyMessage = replyMessage + "```"
             await message.channel.send(replyMessage)
-client.run("NTEyOTgxMDU1Nzc1NTcxOTcw.W-7E1g.lv0rjivmUgLqd6OkDpOHWw1CNA4")
+client.run("Something here")
