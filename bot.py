@@ -26,6 +26,12 @@ startTime = time.time()
 
 print("Checking for any root users")
 
+curPath = os.path.dirname(sys.argv[0])
+
+if not os.path.exists(os.path.join(os.path.dirname(sys.argv[0]), "servers")):
+    print("There is no directory called servers")
+    os.mkdir(os.path.join(os.path.dirname(sys.argv[0]), "servers"))
+
 if os.path.exists("rootUser.txt"):
     with open("rootUser.txt", 'r') as f:
         rootUserText = ""
@@ -71,6 +77,9 @@ async def on_ready():
             restartedBot = False
             restartCommandChannel = ""
         await channel.send("Bot restarted successfully! (Duration: {0} seconds)".format(round(time.time() - restartTime, 2)))
+    for guild in client.guilds:
+        if not os.path.exists(os.path.join(curPath, "servers", str(guild.id))):
+            os.mkdir(os.path.join(curPath, "servers", str(guild.id)))
 
 @client.event
 async def on_message(message):
@@ -185,8 +194,6 @@ async def on_message(message):
         os.execv(sys.executable, ['python3'] + sys.argv)
     elif message.content.startswith('.restartBot'):
         await message.channel.send("You lack permissions to execute a restart! Please provide the root password or become owner of the bot")
-
-
     # End of root access
 
     # List all commands and explanation for the command
@@ -196,8 +203,8 @@ async def on_message(message):
             replyMessage = replyMessage + "```***Help / Commands***\n"
             replyMessage = replyMessage + ".rashid?                    - Will let you know what city Rashid is currently reciding in, BOT DOES NOT ACCOUNT FOR SERVER SAVE\n"
             replyMessage = replyMessage + ".shareExp level             - Will let you know what the party exp share range is for your level\n"
-            replyMessage = replyMessage + ".saveLoot lootText          - Will save loot to a file on the server, very useful if you don't want to manually save everything locally\n"
-            replyMessage = replyMessage + ".calcSavedLoot              - Will calculate all the payout from loot saved to the saveLoot file on the server\n"
+            replyMessage = replyMessage + ".saveLoot lootText          - Will save loot to a user specific file on the server, very useful if you don't want to manually save everything locally\n"
+            replyMessage = replyMessage + ".calcSavedLoot              - Will calculate all the payout from loot saved to the user specific saveLoot file on the server\n"
             replyMessage = replyMessage + ".clearSavedLoot             - Will clear all the prior saved loot from the server\n"
             replyMessage = replyMessage + ".calcLoot lootText          - Will calculate the payouts from the lootText you provide the command\n"
             replyMessage = replyMessage + ".charInfo name              - Will show information about the player name specified\n"
@@ -316,7 +323,12 @@ async def on_message(message):
             removePrefix = message.content.split('.saveLoot ')
             if removePrefix[0] == ' ':
                 del removePrefix[0]
-            with open("savedLoot.txt", "a+") as f:
+            if not os.path.exists(os.path.join(curPath, "servers", str(message.guild.id), str(message.author.id))):
+                if not os.path.exists(os.path.join(curPath, "servers", str(message.guild.id))):
+                    os.mkdir(os.path.join(curPath, "servers", str(message.guild.id)))
+                else:
+                    os.mkdir(os.path.join(curPath, "servers", str(message.guild.id), str(message.author.id)))    
+            with open(os.path.join(curPath, "servers", str(message.guild.id), str(message.author.id), "savedLoot.txt"), "a+") as f:
                 f.write(removePrefix[1] + "\n")
             replyMessage = '<@{}>'.format(message.author.id) + '```***Save Loot***\n Successfully saved loot to server```'
             print("{0} executed save loot".format(message.author))
@@ -325,8 +337,8 @@ async def on_message(message):
         if message.content.startswith('.calcSavedLoot'):
             players = {}
             entries = 0
-            if os.path.exists("savedLoot.txt"):
-                with open("savedLoot.txt", "r") as f:
+            if os.path.exists(os.path.join(curPath, "servers", str(message.guild.id), str(message.author.id))):
+                with open(os.path.join(curPath, "servers", str(message.guild.id), str(message.author.id), "savedLoot.txt"), "r") as f:
                     lootText = ""
                     for line in f.readlines():
                         if line == "Hunt loot share: \n":
@@ -356,8 +368,8 @@ async def on_message(message):
             await message.channel.send(replyMessage)
 
         if message.content.startswith('.clearSavedLoot'):
-            if os.path.exists("savedLoot.txt"):
-                os.remove("savedLoot.txt")
+            if os.path.exists(os.path.join(curPath, "servers", str(message.guild.id), str(message.author.id))):
+                os.remove(os.path.join(curPath, "servers", str(message.guild.id), str(message.author.id), "savedLoot.txt"))
             replyMessage = '<@{}>'.format(message.author.id) + '```***Clear Saved Loot***\n Successfully cleared saved loot```'
             await message.channel.send(replyMessage)
 
@@ -470,8 +482,8 @@ async def on_message(message):
             removePrefix = message.content.split('.spells ')
             if removePrefix[0] == ' ':
                 del removePrefix[0]
+            tempMessage = await message.channel.send("Please give me a moment to fetch this data from the api")
             if "knight" in removePrefix[1].lower() or "paladin" in removePrefix[1].lower() or "druid" in removePrefix[1].lower() or "sorcerer" in removePrefix[1].lower():
-                await message.channel.send("Please give me a moment to fetch this data from the api")
                 response = requests.get('https://tibiawiki.dev/api/spells?expand=true')
                 if response.status_code == 200:
                     response = response.json()
@@ -481,7 +493,7 @@ async def on_message(message):
                             if removePrefix[1].lower() in i["voc"].lower():
                                 print(i["name"])
                                 spellList.append(i["name"])
-                    replyMessage = '<@{}>'.format(message.author.id) + '```***Spell List for the vocation you specified***\n'
+                    replyMessage = '<@{}>'.format(message.author.id) + '```***Spell List ({0})***\n'.format(removePrefix[1].lower())
                     for i in spellList:
                         replyMessage = replyMessage + '{0}\n'.format(i)
                     replyMessage = replyMessage + '\nInformation provided by: https://tibiawiki.dev/api```'
@@ -490,7 +502,7 @@ async def on_message(message):
             else:
                 replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nVocation not recognized```"
             print("{0} executed spell list command".format(message.author))
-            await message.channel.send(replyMessage)
+            await tempMessage.edit(content=replyMessage)
 
         if message.content.startswith('.item '):
             removePrefix = message.content.split('.item ')
@@ -508,6 +520,7 @@ async def on_message(message):
                         itemName = itemName + i.capitalize() + "%20"
                 else:
                     itemName = itemName + i.capitalize()
+            tempMessage = await message.channel.send("Please wait while I fetch this information!")
             response = requests.get('https://tibiawiki.dev/api/items/{0}'.format(itemName))
             displayImbues = False
             displayDefMod = False
@@ -689,7 +702,7 @@ async def on_message(message):
             else:
                 replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
             print("{0} executed item lookup command".format(message.author))
-            await message.channel.send(replyMessage)
+            await tempMessage.edit(content=replyMessage)
 
         if message.content.startswith('.creature '):
             removePrefix = message.content.split('.creature ')
@@ -707,6 +720,7 @@ async def on_message(message):
                         creatureName = creatureName + i.capitalize() + "%20"
                 else:
                     creatureName = creatureName + i.capitalize()
+            tempMessage = await message.channel.send("Please wait while I fetch this information")
             response = requests.get('https://tibiawiki.dev/api/creatures/{0}'.format(creatureName))
             if response.status_code == 200:
                 response = response.json()
@@ -809,7 +823,7 @@ async def on_message(message):
             else:
                 replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
             print("{0} executed creature lookup command".format(message.author))
-            await message.channel.send(replyMessage)
+            await tempMessage.edit(content=replyMessage)
 
 botToken = ""
 
