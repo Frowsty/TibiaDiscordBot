@@ -206,7 +206,10 @@ async def on_message(message):
             replyMessage = replyMessage + ".whoIsOwner?                - Will display who is the assigned owner of the current bot instance\n"
             replyMessage = replyMessage + ".github?                    - Will display the link to my github containing the project for this bot\n"
             replyMessage = replyMessage + ".upTime S/M/H/D             - Will display the current time elapsed since bot restarted (S = seconds, M = minutes, H = hours, D = days)\n"
-            replyMessage = replyMessage + ".spell spellname            - Will display information about the spell name you are looking up```"
+            replyMessage = replyMessage + ".spell spellname            - Will display information about the spell name you are looking up\n"
+            replyMessage = replyMessage + ".spells vocation            - Will display all spells for the specified vocation\n"
+            replyMessage = replyMessage + ".item itemname              - Will display information about the item you are looking up\n"
+            replyMessage = replyMessage + ".creature creaturename      - Will display information about the creature you are looking up```"
             print("{0} executed help command".format(message.author))
             await message.channel.send(replyMessage)
 
@@ -342,7 +345,7 @@ async def on_message(message):
                                 else:
                                     players[splitM[0]] = 0
                                     players[splitM[0]] = players[splitM[0]] + atoi(splitM[1])
-                    replyMessage = '<@{}>'.format(message.author.id) + '```***Payouts from {0} hunt(s)***'.format(entries)
+                    replyMessage = '<@{}>'.format(message.author.id) + '```***Payout from {0} hunt(s)***'.format(entries)
                     for k, sendMessage in players.items():
                         replyMessage = replyMessage + '\n'
                         replyMessage = replyMessage + k + ': ' + str(sendMessage)
@@ -438,24 +441,26 @@ async def on_message(message):
                     spellName = spellName + i.capitalize() + "%20"
                 else:
                     spellName = spellName + i.capitalize()
-            print(spellName)
             response = requests.get('https://tibiawiki.dev/api/spells/{0}'.format(spellName))
             if response.status_code == 200:
                 response = response.json()
-                vocText = response["voc"]
-                vocText = vocText.replace("[", "")
-                vocText = vocText.replace("]", "")
-                replyMessage = '<@{}>'.format(message.author.id) + '```***Spell Info***\n'
-                replyMessage = replyMessage + 'Name: {0}\n'.format(response["name"])
-                replyMessage = replyMessage + 'Level: {0}\n'.format(response["levelrequired"])
-                replyMessage = replyMessage + 'Mana Cost: {0}\n'.format(response["mana"])
-                replyMessage = replyMessage + 'Vocation(s): {0}\n'.format(vocText)
-                replyMessage = replyMessage + 'Spell Cost: {0}\n'.format(response["spellcost"])
-                replyMessage = replyMessage + 'Spell Type: {0}\n'.format(response["subclass"])
-                if response["subclass"] == "Attack":
-                    replyMessage = replyMessage + 'Damage Type: {0}\n'.format(response["damagetype"])
-                replyMessage = replyMessage + 'Spell Words: {0}\n\n'.format(response["words"])
-                replyMessage = replyMessage + 'Information provided by: https://tibiawiki.dev/api```'
+                if response["templateType"] == "Spell":
+                    vocText = response["voc"]
+                    vocText = vocText.replace("[", "")
+                    vocText = vocText.replace("]", "")
+                    replyMessage = '<@{}>'.format(message.author.id) + '```***Spell Info***\n'
+                    replyMessage = replyMessage + 'Name: {0}\n'.format(response["name"])
+                    replyMessage = replyMessage + 'Level: {0}\n'.format(response["levelrequired"])
+                    replyMessage = replyMessage + 'Mana Cost: {0}\n'.format(response["mana"])
+                    replyMessage = replyMessage + 'Vocation(s): {0}\n'.format(vocText)
+                    replyMessage = replyMessage + 'Spell Cost: {0}\n'.format(response["spellcost"])
+                    replyMessage = replyMessage + 'Spell Type: {0}\n'.format(response["subclass"])
+                    if response["subclass"] == "Attack":
+                        replyMessage = replyMessage + 'Damage Type: {0}\n'.format(response["damagetype"])
+                    replyMessage = replyMessage + 'Spell Words: {0}\n\n'.format(response["words"])
+                    replyMessage = replyMessage + 'Information provided by: https://tibiawiki.dev/api```'
+                else:
+                    replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nPlease provide a valid spell name```"
             else:
                 replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
             print("{0} executed spell lookup command".format(message.author))
@@ -484,6 +489,326 @@ async def on_message(message):
                     replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
             else:
                 replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nVocation not recognized```"
+            print("{0} executed spell list command".format(message.author))
+            await message.channel.send(replyMessage)
+
+        if message.content.startswith('.item '):
+            removePrefix = message.content.split('.item ')
+            if removePrefix[0] == ' ':
+                del removePrefix[0]
+            splitItemName = removePrefix[1].split()
+            itemName = ""
+            num = 0
+            for i in splitItemName:
+                num = num + 1
+                if num < len(splitItemName):
+                    if i.lower() == "of":
+                        itemName = itemName + i + "%20"
+                    else:
+                        itemName = itemName + i.capitalize() + "%20"
+                else:
+                    itemName = itemName + i.capitalize()
+            response = requests.get('https://tibiawiki.dev/api/items/{0}'.format(itemName))
+            displayImbues = False
+            displayDefMod = False
+            displayAttrib = False
+            displayResist = False
+            displayVoc = False
+            displayLevelReq = False
+            displayEnergyAtk = False
+            displayFireAtk = False
+            displayIceAtk = False
+            displayEarthAtk = False
+            displayDeathAtk = False
+            displayManaLeech = False
+            displayHpLeech = False
+            displayAttack = False
+            displayDefense = False
+            displayDamageType = False
+            displayDamage = False
+            displayCrit = False
+            displayCharges = False
+            displayManaCost = False
+            displayArmor = False
+            displayDuration = False
+            displayVolume = False
+            displayHands = False
+            displayAttackMod = False
+            displayHitMod = False
+            displayRange = False
+
+            if response.status_code == 200 and len(response.json()) > 1:
+                response = response.json()
+                if response["templateType"] == "Item":
+                    for i in response:
+                        if "armor" in i:
+                            displayArmor = True
+                        if "attack" in i:
+                            displayAttack = True
+                        if "defense" in i:
+                            displayDefense = True
+                        if "vocrequired" in i:
+                            displayVoc = True
+                        if "resist" in i:
+                            displayResist = True
+                        if "attrib" in i:
+                            displayAttrib = True
+                        if "defensemod" in i:
+                            displayDefMod = True
+                        if "energy_attack" in i:
+                            displayEnergyAtk = True
+                        if "imbueslots" in i:
+                            displayImbues = True
+                        if "levelrequired" in i:
+                            displayLevelReq = True
+                        if "fire_attack" in i:
+                            displayFireAtk = True
+                        if "ice_attack" in i:
+                            displayIceAtk = True
+                        if "earth_attack" in i:
+                            displayEarthAtk = True
+                        if "death_attack" in i:
+                            displayDeathAtk = True
+                        if "manaleech_am" in i or "manaleech_ch" in i:
+                            displayManaLeech = True
+                        if "hpleech_am" in i or "hpleech_ch" in i:
+                            displayHpLeech = True
+                        if "damagetype" in i:
+                            displayDamageType = True
+                        if "damage" in i:
+                            displayDamage = True
+                        if "crithit_ch" in i:
+                            displayCrit = True
+                        if "charges" in i:
+                            displayCharges = True
+                        if "mana" == i:
+                            displayManaCost = True
+                        if "duration" in i:
+                            displayDuration = True
+                        if "volume" in i:
+                            displayVolume = True
+                        if "hands" in i:
+                            displayHands = True
+                        if "atk_mod" in i:
+                            displayAttackMod = True
+                        if "hit_mod" in i:
+                            displayHitMod = True
+                        if "range" in i:
+                            displayRange = True
+
+                    replyMessage = '<@{}>'.format(message.author.id) + '```***Item Info***\n'
+                    replyMessage = replyMessage + 'Name: {0}\n'.format(response["name"])
+                    if response["itemclass"] == "Weapons":
+                        if displayAttack:
+                            replyMessage = replyMessage + 'Attack: {0}\n'.format(response["attack"])
+                        if displayDamage:
+                            replyMessage = replyMessage + 'Damage: {0}\n'.format(response["damage"])
+                        if displayDamageType:
+                            replyMessage = replyMessage + 'Damage Type: {0}\n'.format(response["damagetype"])
+                        if displayAttackMod:
+                            replyMessage = replyMessage + 'Attack Mod: +{0}\n'.format(response["atk_mod"])
+                        if displayHitMod:
+                            replyMessage = replyMessage + 'Hit Mod: {0}%\n'.format(response["hit_mod"])
+                        if displayRange:
+                            replyMessage = replyMessage + 'Range: {0}\n'.format(response["range"])
+                        if displayEnergyAtk:
+                            replyMessage = replyMessage + 'Energy Damage: {0}\n'.format(response["energy_attack"])
+                        if displayFireAtk:
+                            replyMessage = replyMessage + 'Fire Damage: {0}\n'.format(response["fire_attack"])
+                        if displayIceAtk:
+                            replyMessage = replyMessage + 'Ice Damage: {0}\n'.format(response["ice_attack"])
+                        if displayEarthAtk:
+                            replyMessage = replyMessage + 'Earth Damage: {0}\n'.format(response["earth_attack"])
+                        if displayDeathAtk:
+                            replyMessage = replyMessage + 'Death Damage: {0}\n'.format(response["death_attack"])
+                        if displayDefense:
+                            replyMessage = replyMessage + 'Defense: {0}\n'.format(response["defense"])
+                        if displayHands:
+                            replyMessage = replyMessage + 'Hands: {0}\n'.format(response["hands"])
+                        if displayImbues:
+                            replyMessage = replyMessage + 'Imbue Slots: {0}\n'.format(response["imbueslots"])
+                        if displayVoc:
+                            replyMessage = replyMessage + 'Required Vocation: {0}\n'.format(response["vocrequired"])
+                        if displayResist:
+                            replyMessage = replyMessage + 'Protection: {0}\n'.format(response["resist"])
+                        if displayAttrib:
+                            replyMessage = replyMessage + 'Attributes: {0}\n'.format(response["attrib"])
+                        if displayManaLeech:
+                            replyMessage = replyMessage + 'Mana leech Chance/Amount: {0} / {1}\n'.format(response["manaleech_ch"], response["manaleech_am"])
+                        if displayHpLeech:
+                            replyMessage = replyMessage + 'Life leech Chance/Amount: {0} / {1}\n'.format(response["hpleech_ch"], response["hpleech_am"])
+                        if displayCrit:
+                            replyMessage = replyMessage + 'Critical hit Chance/Amount: {0} / {1}\n'.format(response["crithit_ch"], response["critextra_dmg"])
+                        if displayCharges:
+                            replyMessage = replyMessage + 'Charges: {0}\n'.format(response["charges"])
+                        if displayManaCost:
+                            replyMessage = replyMessage + 'Mana per hit: {0}\n'.format(response["mana"])
+                        if displayDefMod:
+                            replyMessage = replyMessage + 'Defence Mod: {0}\n'.format(response["defensemod"])
+                        if displayLevelReq:
+                            replyMessage = replyMessage + 'Level Requirement: {0}\n'.format(response["levelrequired"])
+                    if response["itemclass"] == "Body Equipment":
+                        if displayArmor:
+                            replyMessage = replyMessage + 'Armor: {0}\n'.format(response["armor"])
+                        if displayImbues:
+                            replyMessage = replyMessage + 'Imbue Slots: {0}\n'.format(response["imbueslots"])
+                        if displayResist:
+                            replyMessage = replyMessage + 'Protection: {0}\n'.format(response["resist"])
+                        if displayAttrib:
+                            replyMessage = replyMessage + 'Attributes: {0}\n'.format(response["attrib"])
+                        if displayVoc:
+                            replyMessage = replyMessage + 'Required Vocation: {0}\n'.format(response["vocrequired"])
+                        if displayLevelReq:
+                            replyMessage = replyMessage + 'Level Requirement: {0}\n'.format(response["levelrequired"])
+                    if response["itemclass"] == "Tools and other Equipment":
+                        if displayArmor:
+                            replyMessage = replyMessage + 'Armor: {0}\n'.format(response["armor"])
+                        if displayResist:
+                            replyMessage = replyMessage + 'Protection: {0}\n'.format(response["resist"])
+                        if displayAttrib:
+                            replyMessage = replyMessage + 'Attributes: {0}\n'.format(response["attrib"])
+                        if displayDuration:
+                            replyMessage = replyMessage + 'Duration: {0}\n'.format(response["duration"])
+                        if displayCharges:
+                            replyMessage = replyMessage + 'Charges: {0}\n'.format(response["charges"])
+                        if displayVoc:
+                            replyMessage = replyMessage + 'Required Vocation: {0}\n'.format(response["vocrequired"])
+                        if displayLevelReq:
+                            replyMessage = replyMessage + 'Level Requirement: {0}\n'.format(response["levelrequired"])
+                    if response["itemclass"] == "Household Items" or response["itemclass"] == "Other Items":
+                        if displayVolume:
+                            replyMessage = replyMessage + 'Volume: {0}\n'.format(response["volume"])
+                        if displayImbues:
+                            replyMessage = replyMessage + 'Imbue Slots: {0}\n'.format(response["imbueslots"])
+                    replyMessage = replyMessage + 'Weight: {0}\n'.format(response["weight"])
+                    replyMessage = replyMessage + 'Value: {0}\n'.format(response["value"])
+                    replyMessage = replyMessage + 'NPC Value: {0}\n'.format(response["npcvalue"])
+                    replyMessage = replyMessage + '\nInformation provided by: https://tibiawiki.dev/api```'
+                else:
+                    replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nPlease provide a valid item name```"
+            else:
+                replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
+            print("{0} executed item lookup command".format(message.author))
+            await message.channel.send(replyMessage)
+
+        if message.content.startswith('.creature '):
+            removePrefix = message.content.split('.creature ')
+            if removePrefix[0] == ' ':
+                del removePrefix[0]
+            splitCreatureName = removePrefix[1].split()
+            creatureName = ""
+            num = 0
+            for i in splitCreatureName:
+                num = num + 1
+                if num < len(splitCreatureName):
+                    if i.lower() == "of":
+                        creatureName = creatureName + i + "%20"
+                    else:
+                        creatureName = creatureName + i.capitalize() + "%20"
+                else:
+                    creatureName = creatureName + i.capitalize()
+            response = requests.get('https://tibiawiki.dev/api/creatures/{0}'.format(creatureName))
+            if response.status_code == 200:
+                response = response.json()
+                displayHpDrainMod = False
+                displayHealMod = False
+                displayFireDmgMod = False
+                displayHolyDmgMod = False
+                displayEarthDmgMod = False
+                displayPhysicalDmgMod = False
+                displayDrownDmgMod = False
+                displayIceDmgMod = False
+                displayEnergyDmgMod = False
+                displayDeathDmgMod = False
+                displayIsBoss = False
+                displayMaxDmg = False
+                displayPushObjects = False
+                displayWalksThrough = False
+                displayParaImmune = False
+                displaySenseInvis = False
+                displayExperience = False
+
+                if response["templateType"] == "Creature":
+                    for i in response:
+                        if "walksthrough" in i:
+                            displayWalksThrough = True
+                        if "pushobjects" in i:
+                            displayPushObjects = True
+                        if "maxdmg" in i:
+                            displayMaxDmg = True
+                        if "isboss" in i:
+                            displayIsBoss = True
+                        if "drownDmgMod" in i:
+                            displayDrownDmgMod = True
+                        if "holyDmgMod" in i:
+                            displayHolyDmgMod = True
+                        if "physicalDmgMod" in i:
+                            displayPhysicalDmgMod = True
+                        if "energyDmgMod" in i:
+                            displayEnergyDmgMod = True
+                        if "earthDmgMod" in i:
+                            displayEarthDmgMod = True
+                        if "iceDmgMod" in i:
+                            displayIceDmgMod = True
+                        if "deathDmgMod" in i:
+                            displayDeathDmgMod = True
+                        if "hpDrainDmgMod" in i:
+                            displayHpDrainMod = True
+                        if "healMod" in i:
+                            displayHealMod = True
+                        if "fireDmgMod" in i:
+                            displayFireDmgMod = True
+                        if "paraimmune" in i:
+                            displayParaImmune = True
+                        if "senseinvis" in i:
+                            displaySenseInvis = True
+                        if "exp" in i:
+                            displayExperience = True
+                    
+                    replyMessage = '<@{}>'.format(message.author.id) + '```***Creature Info***\n'
+                    replyMessage = replyMessage + 'Name: {0}\n'.format(response["name"])
+                    replyMessage = replyMessage + 'Health: {0}\n'.format(response["hp"])
+                    replyMessage = replyMessage + 'Experience: {0}\n'.format(response["exp"])
+                    if displayMaxDmg:
+                        replyMessage = replyMessage + 'Max Damage: {0}\n'.format(response["maxdmg"])
+                    if displayIsBoss:
+                        replyMessage = replyMessage + 'Is Boss?: {0}\n'.format(response["isboss"])
+                    if displayPushObjects:
+                        replyMessage = replyMessage + 'Push objects?: {0}\n'.format(response["pushobjects"])
+                    if displayWalksThrough:
+                        replyMessage = replyMessage + 'Walks Through: {0}\n'.format(response["walksthrough"])
+                    replyMessage = replyMessage + '-Elemental Properties-\n'
+                    if displayPhysicalDmgMod:
+                        replyMessage = replyMessage + 'Physical: {0}\n'.format(response["physicalDmgMod"])
+                    if displayEarthDmgMod:
+                        replyMessage = replyMessage + 'Earth: {0}\n'.format(response["earthDmgMod"])
+                    if displayFireDmgMod:
+                        replyMessage = replyMessage + 'Fire: {0}\n'.format(response["fireDmgMod"])
+                    if displayDeathDmgMod:
+                        replyMessage = replyMessage + 'Death: {0}\n'.format(response["deathDmgMod"])
+                    if displayEnergyDmgMod:
+                        replyMessage = replyMessage + 'Energy: {0}\n'.format(response["energyDmgMod"])
+                    if displayHolyDmgMod:
+                        replyMessage = replyMessage + 'Holy: {0}\n'.format(response["holyDmgMod"])
+                    if displayIceDmgMod:
+                        replyMessage = replyMessage + 'Ice: {0}\n'.format(response["iceDmgMod"])
+                    if displayHealMod:
+                        replyMessage = replyMessage + 'Heal: {0}\n'.format(response["healMod"])
+                    if displayHpDrainMod:
+                        replyMessage = replyMessage + 'Life Drain: {0}\n'.format(response["hpDrainDmgMod"])
+                    if displayDrownDmgMod:
+                        replyMessage = replyMessage + 'Drown: {0}\n'.format(response["drownDmgMod"])
+                    replyMessage = replyMessage + '-Immunity Properties-\n'
+                    if displayParaImmune:
+                        replyMessage = replyMessage + 'Paralysable: {0}\n'.format(response["paraimmune"])
+                    if displaySenseInvis:
+                        replyMessage = replyMessage + 'Sense Invisible: {0}\n'.format(response["senseinvis"])
+                    replyMessage = replyMessage + '\nInformation provided by: https://tibiawiki.dev/api```'
+                else:
+                    replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nPlease provide a valid creature name```"
+            else:
+                replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
+            print("{0} executed creature lookup command".format(message.author))
             await message.channel.send(replyMessage)
 
 botToken = ""
