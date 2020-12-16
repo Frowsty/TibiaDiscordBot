@@ -203,7 +203,7 @@ async def on_message(message):
             replyMessage = replyMessage + "```***Help / Commands***\n"
             replyMessage = replyMessage + ".rashid?                    - Will let you know what city Rashid is currently reciding in, BOT DOES NOT ACCOUNT FOR SERVER SAVE\n"
             replyMessage = replyMessage + ".shareExp level             - Will let you know what the party exp share range is for your level\n"
-            replyMessage = replyMessage + ".saveLoot lootText          - Will save loot to a user specific file on the server, very useful if you don't want to manually save everything locally\n"
+            replyMessage = replyMessage + ".saveLoot lootText          - Will save loot to a user specific file on the server to later be calculated using the '.calcSavedLoot' command\n"
             replyMessage = replyMessage + ".calcSavedLoot              - Will calculate all the payout from loot saved to the user specific saveLoot file on the server\n"
             replyMessage = replyMessage + ".clearSavedLoot             - Will clear all the prior saved loot from the server\n"
             replyMessage = replyMessage + ".calcLoot lootText          - Will calculate the payouts from the lootText you provide the command\n"
@@ -276,7 +276,6 @@ async def on_message(message):
                 hp = 185 + (5 * (level - 8))
                 mana = 90 + (30 * (level - 8))
                 replyMessage = '<@{}>'.format(message.author.id) + '```***General Vocation Stats For ED/MS***\n'
-                replyMessage = replyMessage + 'HP: {0}\nMANA: {1}\nCAP: {2}\nSPEED: {3}'.format(hp, mana, cap, speed) + '```'
             if splitString[0] == "EK":
                 level = int(splitString[1])
                 speed = 117 + level - 8
@@ -284,7 +283,6 @@ async def on_message(message):
                 hp = 185 + (15 * (level - 8))
                 mana = 90 + (5 * (level - 8))
                 replyMessage = '<@{}>'.format(message.author.id) + '```***General Vocation Stats For EK***\n'
-                replyMessage = replyMessage + 'HP: {0}\nMANA: {1}\nCAP: {2}\nSPEED: {3}'.format(hp, mana, cap, speed) + '```'
             if splitString[0] == "RP":
                 level = int(splitString[1])
                 speed = 117 + level - 8
@@ -292,7 +290,7 @@ async def on_message(message):
                 hp = 185 + (10 * (level - 8))
                 mana = 90 + (15 * (level - 8))
                 replyMessage = '<@{}>'.format(message.author.id) + '```***General Vocation Stats For RP***\n'
-                replyMessage = replyMessage + 'HP: {0}\nMANA: {1}\nCAP: {2}\nSPEED: {3}'.format(hp, mana, cap, speed) + '```'
+            replyMessage = replyMessage + 'HP: {0}\nMANA: {1}\nCAP: {2}\nSPEED: {3}'.format(hp, mana, cap, speed) + '```'
             print("{0} executed vocation stats checker".format(message.author))
             await message.channel.send(replyMessage)
 
@@ -825,8 +823,54 @@ async def on_message(message):
             print("{0} executed creature lookup command".format(message.author))
             await tempMessage.edit(content=replyMessage)
 
-botToken = ""
+        if message.content.startswith('.addHunted '):
+            removePrefix = message.content.split('.addHunted ')
+            if removePrefix[0] == ' ':
+                del removePrefix[0]
+            if not os.path.exists(os.path.join(curPath, "servers", str(message.guild.id))):
+                os.mkdir(os.path.join(curPath, "servers", str(message.guild.id)))
+            with open(os.path.join(curPath, "servers", str(message.guild.id), "huntedList.txt"), "a+") as f:
+                f.write(removePrefix[1] + "\n")
+            replyMessage = '<@{}>'.format(message.author.id) + '```***Hunted List***\n Players successfully added to hunted list```'
+            print("{0} executed add hunted command".format(message.author))
+            await message.channel.send(replyMessage)
 
+        if message.content.startswith('.huntedList'):
+            replyMessage = '<@{}>'.format(message.author.id) + '```***Hunted List***\n'
+            if os.path.exists(os.path.join(curPath, "servers", str(message.guild.id), "huntedList.txt")):
+                with open(os.path.join(curPath, "servers", str(message.guild.id), "huntedList.txt"), "r") as f:
+                    for i in f.readlines():
+                        replyMessage = replyMessage + i
+            else:
+                replyMessage = replyMessage + "No hunted list found"
+            replyMessage = replyMessage + "```"
+            print("{0} executed hunted list command".format(message.author))
+            await message.channel.send(replyMessage)
+        
+        if message.content.startswith('.removeHunted '):
+            removePrefix = message.content.split('.removeHunted ')
+            if removePrefix[0] == ' ':
+                del removePrefix[0]
+            storeFileInfo = ""
+            wasFound = False
+            if os.path.exists(os.path.join(curPath, "servers", str(message.guild.id), "huntedList.txt")):
+                replyMessage = '<@{}>'.format(message.author.id) + '```***Hunted List***\n'
+                with open(os.path.join(curPath, "servers", str(message.guild.id), "huntedList.txt"), "r") as f:
+                    for i in f.readlines():
+                        if not removePrefix[1] in i:
+                            storeFileInfo = storeFileInfo + i
+                        else:
+                            wasFound = True
+                with open(os.path.join(curPath, "servers", str(message.guild.id), "huntedList.txt"), "w") as f:
+                    f.write(storeFileInfo)
+                if wasFound:
+                    replyMessage = replyMessage + "Successfully removed played from hunted list```"
+            else:
+                replyMessage = '<@{}>'.format(message.author.id) + '```***Hunted List***\n Hunted list not found```'
+            print("{0} executed remove hunted command".format(message.author))
+            await message.channel.send(replyMessage)
+
+botToken = ""
 if os.path.exists("token.txt"):
     with open("token.txt", 'r') as f:
         botToken = f.readline()
