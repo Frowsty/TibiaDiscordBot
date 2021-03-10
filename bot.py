@@ -375,32 +375,57 @@ async def on_message(message):
             removePrefix = message.content.split('.charInfo ')
             if removePrefix[0] == ' ':
                 del removePrefix[0]
-            charInfo = requests.get("https://api.tibiadata.com/v2/characters/{0}.json".format(removePrefix[1]))
-            charInfoData = charInfo.json()["characters"]["data"]
+            tempMessage = await message.channel.send("Please give me a moment to fetch this data from the api")
+            charInfo = requests.get("https://api.tibiadata.com/v2/characters/{0}.json".format(removePrefix[1][0].upper() + removePrefix[1][1:]), verify=False)
             if charInfo.status_code == 200:
-                replyMessage = '<@{}>'.format(message.author.id) + '```***Character info***\n'
-                replyMessage = replyMessage + "Name: {0}\n".format(charInfoData["name"])
-                replyMessage = replyMessage + "Level: {0}\n".format(charInfoData["level"])
-                replyMessage = replyMessage + "Vocation: {0}\n".format(charInfoData["vocation"])
-                replyMessage = replyMessage + "Status: {0}\n".format(charInfoData["status"])
-                replyMessage = replyMessage + "Last API update: {0}```".format(charInfo.json()["information"]["last_updated"].split(" ")[1])
-                await message.channel.send(replyMessage)
+                errorOccured = False
+                for i in charInfo.json()["characters"]:
+                    if "error" in i:
+                        errorOccured = True
+                if not errorOccured:
+                    charInfoData = charInfo.json()["characters"]["data"]
+                    lastLoginDate = charInfoData["last_login"][0]["date"][:-7]
+                    lastLoginTimezone = charInfoData["last_login"][0]["timezone"]
+                    replyMessage = '<@{}>'.format(message.author.id) + '```***Character info***\n'
+                    replyMessage = replyMessage + "Name: {0}\n".format(charInfoData["name"])
+                    replyMessage = replyMessage + "Level: {0}\n".format(charInfoData["level"])
+                    replyMessage = replyMessage + "Vocation: {0}\n".format(charInfoData["vocation"])
+                    replyMessage = replyMessage + "Status: {0}\n".format(charInfoData["status"])
+                    replyMessage = replyMessage + "Last login: {0} {1}\n".format(lastLoginDate, lastLoginTimezone)
+                    replyMessage = replyMessage + "\nLast API update: {0}\n".format(charInfo.json()["information"]["last_updated"].split(" ")[1])
+                    replyMessage = replyMessage + 'Information provided by: https://api.tibiadata.com/v2/```'
+                else:
+                    replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nPlease provide a valid character name```"
+            else:
+                replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
+            await tempMessage.edit(content=replyMessage)
 
         if message.content.startswith(".deathList "):
             removePrefix = message.content.split('.deathList ')
             if removePrefix[0] == ' ':
                 del removePrefix[0]
-            charInfo = requests.get("https://api.tibiadata.com/v2/characters/{0}.json".format(removePrefix[1]))
-            charInfoData = charInfo.json()["characters"]["deaths"]
+            tempMessage = await message.channel.send("Please give me a moment to fetch this data from the api")
+            charInfo = requests.get("https://api.tibiadata.com/v2/characters/{0}.json".format(removePrefix[1]), verify=False)
             if charInfo.status_code == 200:
-                replyMessage = '<@{}>'.format(message.author.id) + '```***Deathlist***\n'
-                for death in charInfoData:
-                    replyMessage = replyMessage + "Date: {0}\n".format(death["date"]["date"].split(" ")[0])
-                    replyMessage = replyMessage + "Level: {0}\n".format(death["level"])
-                    replyMessage = replyMessage + "Reason: {0}\n".format(death["reason"])
-                    replyMessage = replyMessage + "\n"
-                replyMessage = replyMessage + "```"
-                await message.channel.send(replyMessage)
+                errorOccured = False
+                for i in charInfo.json()["characters"]:
+                    if "error" in i:
+                        errorOccured = True
+                if not errorOccured:
+                    charInfoData = charInfo.json()["characters"]["deaths"]
+                    replyMessage = '<@{}>'.format(message.author.id) + '```***Deathlist***\n'
+                    for death in charInfoData:
+                        replyMessage = replyMessage + "Date: {0}\n".format(death["date"]["date"].split(" ")[0])
+                        replyMessage = replyMessage + "Level: {0}\n".format(death["level"])
+                        replyMessage = replyMessage + "Reason: {0}\n".format(death["reason"])
+                        replyMessage = replyMessage + "\n"
+                    replyMessage = replyMessage + "\nLast API update: {0}\n".format(charInfo.json()["information"]["last_updated"].split(" ")[1])
+                    replyMessage = replyMessage + 'Information provided by: https://api.tibiadata.com/v2/```'
+                else:
+                    replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nPlease provide a valid character name```"
+            else:
+                replyMessage = '<@{}>'.format(message.author.id) + "```***Error***\nFailed to fetch information from api```"
+            await tempMessage.edit(content=replyMessage)
         
         if message.content.startswith('.whoIsOwner?'):
             replyMessage = '<@{}>'.format(message.author.id) + '```***Owner***\n'
